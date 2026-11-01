@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { AccountModal } from "./components/AccountModal";
 import { AmbientLock } from "./components/AmbientLock";
 import { AppFooter } from "./components/AppFooter";
+import { AppVersion } from "./components/AppVersion";
 import { AuthScreen } from "./components/AuthScreen";
 import { BackupModal } from "./components/BackupModal";
 import { SettingsModal } from "./components/SettingsModal";
@@ -268,6 +269,7 @@ function AppShell() {
 
   return (
     <div className="app">
+      <AppVersion />
       <TitleBar />
       <AmbientLock />
       <div className="app-body">

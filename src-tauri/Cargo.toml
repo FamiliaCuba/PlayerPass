@@ -1,6 +1,6 @@
 [package]
 name = "playerpass"
-version = "0.1.2"
+version = "0.1.3"
 description = "PlayerPass — vault local cifrado de cuentas de juegos"
 authors = ["fmcuba"]
 edition = "2021"
