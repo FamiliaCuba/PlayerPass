@@ -1,0 +1,47 @@
+[package]
+name = "playerpass"
+version = "0.1.0"
+description = "PlayerPass — vault local cifrado de cuentas de juegos"
+authors = ["fmcuba"]
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "playerpass_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+uuid = { version = "1", features = ["v4", "serde"] }
+arboard = "3"
+zeroize = { version = "1", features = ["derive"] }
+thiserror = "2"
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde", "clock"] }
+ureq = { version = "2", features = ["json"] }
+whoami = "1"
+sha2 = "0.10"
+hex = "0.4"
+urlencoding = "2"
+open = "5"
+rfd = "0.15"
+
+[target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
+tauri-plugin-updater = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

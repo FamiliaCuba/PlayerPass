@@ -1,0 +1,106 @@
+# Publica un release de Windows (NSIS) + artifacts del updater al pushear un tag v*.
+# Requiere secretos: TAURI_SIGNING_PRIVATE_KEY (+ opcional PASSWORD).
+# Ver docs/RELEASE.md
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend deps
+        run: npm ci
+
+      # local.rs está gitignored; el build falla sin él.
+      # Por defecto usa el example (placeholders). Para builds "oficiales"
+      # con webhook/OAuth reales, define los secretos opcionalmente listados abajo.
+      - name: Preparar secrets/local.rs
+        shell: pwsh
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ADMIN_RECOVERY_CODE: ${{ secrets.ADMIN_RECOVERY_CODE }}
+          DISCORD_INVITE_URL: ${{ secrets.DISCORD_INVITE_URL }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          MICROSOFT_OAUTH_CLIENT_ID: ${{ secrets.MICROSOFT_OAUTH_CLIENT_ID }}
+        run: |
+          $dst = "src-tauri/secrets/local.rs"
+          if (-not [string]::IsNullOrWhiteSpace($env:DISCORD_WEBHOOK_URL)) {
+            $admin = if ($env:ADMIN_RECOVERY_CODE) { $env:ADMIN_RECOVERY_CODE } else { "cambia-este-codigo-admin" }
+            $invite = if ($env:DISCORD_INVITE_URL) { $env:DISCORD_INVITE_URL } else { "https://discord.gg/TU-INVITE" }
+            $google = if ($env:GOOGLE_OAUTH_CLIENT_ID) { $env:GOOGLE_OAUTH_CLIENT_ID } else { "REEMPLAZA.apps.googleusercontent.com" }
+            $ms = if ($env:MICROSOFT_OAUTH_CLIENT_ID) { $env:MICROSOFT_OAUTH_CLIENT_ID } else { "REEMPLAZA-AZURE-APP-ID" }
+            $body = @"
+          // Generado en CI — no commitear.
+          pub const DISCORD_WEBHOOK_URL: &str = "$($env:DISCORD_WEBHOOK_URL)";
+          pub const ADMIN_RECOVERY_CODE: &str = "$admin";
+          pub const DISCORD_INVITE_URL: &str = "$invite";
+          pub const GOOGLE_OAUTH_CLIENT_ID: &str = "$google";
+          pub const MICROSOFT_OAUTH_CLIENT_ID: &str = "$ms";
+          "@
+            # Quitar indentación accidental del YAML/heredoc
+            $lines = $body -split "`n" | ForEach-Object { $_ -replace '^\s+', '' }
+            [System.IO.File]::WriteAllLines((Join-Path $pwd $dst), $lines)
+            Write-Host "local.rs generado desde secretos de GitHub"
+          } else {
+            Copy-Item src-tauri/secrets/local.example.rs $dst
+            Write-Host "local.rs = local.example.rs (placeholders)"
+          }
+
+      # Local: createUpdaterArtifacts=false (no exige privkey).
+      # CI: activarlo solo aquí para firmar .sig + latest.json.
+      - name: Activar createUpdaterArtifacts
+        shell: pwsh
+        run: |
+          $path = "src-tauri/tauri.conf.json"
+          $raw = Get-Content $path -Raw
+          if ($raw -notmatch '"createUpdaterArtifacts"\s*:\s*false') {
+            throw "createUpdaterArtifacts no está en false; abortando para no firmar a ciegas"
+          }
+          $raw = $raw -replace '"createUpdaterArtifacts"\s*:\s*false', '"createUpdaterArtifacts": true'
+          [System.IO.File]::WriteAllText((Resolve-Path $path), $raw)
+
+      - name: Build + GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: PlayerPass ${{ github.ref_name }}
+          releaseBody: |
+            Instalador Windows (NSIS) + updater (`latest.json`).
+
+            SmartScreen puede avisar si el instalador no está firmado con Authenticode.
+            Ver `docs/RELEASE.md`.
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          uploadUpdaterSignatures: true
