@@ -8,8 +8,8 @@ html.theme-dark {
   --panel-solid: #161820;
   --stroke: rgba(255, 255, 255, 0.1);
   --stroke-strong: rgba(90, 200, 255, 0.55);
-  --text: #f5f5f7;
-  --muted: #9aa0ad;
+  --text: #f7f8fc;
+  --muted: #b4bac8;
   --accent: #0a84ff;
   --accent-glow: rgba(10, 132, 255, 0.45);
   --accent-soft: rgba(10, 132, 255, 0.18);

@@ -1,6 +1,6 @@
 # Publishing PlayerPass on GitHub (auto-update)
 
-Copy-pasteable guide. Current aligned version: **0.1.0** (`package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`).
+Copy-pasteable guide. Current aligned version: **0.1.2** (`package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`).
 
 Remote: `https://github.com/FamiliaCuba/PlayerPass`.
 

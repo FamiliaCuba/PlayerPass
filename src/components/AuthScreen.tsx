@@ -106,24 +106,24 @@ export function AuthScreen({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.28 }}
     >
+      <div className="auth-chrome">
+        <LanguageSwitch compact />
+        {onOpenSettings ? (
+          <button
+            type="button"
+            className="auth-chrome-link"
+            onClick={onOpenSettings}
+          >
+            {t("settings")}
+          </button>
+        ) : null}
+      </div>
       <motion.div
         className="auth-card"
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 280, damping: 26 }}
       >
-        <div className="auth-topbar">
-          <LanguageSwitch />
-          {onOpenSettings ? (
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={onOpenSettings}
-            >
-              {t("settings")}
-            </button>
-          ) : null}
-        </div>
         <div className="brand-block">
           <span className="brand-logo-wrap">
             <img src="/logo.svg" alt="" className="brand-logo" />

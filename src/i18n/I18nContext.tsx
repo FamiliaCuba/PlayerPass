@@ -58,18 +58,18 @@ export function useI18n() {
   return ctx;
 }
 
-export function LanguageSwitch() {
+export function LanguageSwitch({ compact = false }: { compact?: boolean }) {
   const { locale, setLocale, t } = useI18n();
   return (
-    <label className="lang-switch">
-      <span>{t("language")}</span>
+    <label className={`lang-switch${compact ? " compact" : ""}`}>
+      {compact ? null : <span>{t("language")}</span>}
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
         aria-label={t("language")}
       >
-        <option value="es">Español</option>
-        <option value="en">English</option>
+        <option value="es">{compact ? "ES" : "Español"}</option>
+        <option value="en">{compact ? "EN" : "English"}</option>
       </select>
     </label>
   );

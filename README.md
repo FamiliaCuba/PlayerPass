@@ -2,7 +2,7 @@
 
 Local game-account manager: one place to store them encrypted and copy username/password with a click.
 
-![PlayerPass screenshot](docs/screenshots/playerpass.png)
+![PlayerPass login screen](docs/screenshots/login.png)
 
 ## Download
 
@@ -11,7 +11,7 @@ Install the latest Windows NSIS setup from GitHub Releases:
 **[Download PlayerPass for Windows](https://github.com/FamiliaCuba/PlayerPass/releases/latest)**
 
 Direct asset (after the Release workflow finishes):  
-`PlayerPass_0.1.0_x64-setup.exe` → [latest release assets](https://github.com/FamiliaCuba/PlayerPass/releases/latest)
+`PlayerPass_0.1.2_x64-setup.exe` → [latest release assets](https://github.com/FamiliaCuba/PlayerPass/releases/latest)
 
 ## Features
 
@@ -69,7 +69,7 @@ npm run tauri build
 
 Typical outputs:
 
-- `src-tauri/target/release/bundle/nsis/PlayerPass_0.1.0_x64-setup.exe` ← **use this installer**
+- `src-tauri/target/release/bundle/nsis/PlayerPass_0.1.2_x64-setup.exe` ← **use this installer**
 - `src-tauri/target/release/playerpass.exe`
 
 ## Code signing (Windows)
@@ -91,7 +91,7 @@ Then `npm run tauri build` will sign the NSIS bundle.
 ```powershell
 # Example (adjust paths and password)
 signtool sign /f "C:\certs\playerpass.pfx" /p "%CERT_PASSWORD%" /fd sha256 /tr http://timestamp.digicert.com /td sha256 `
-  "src-tauri\target\release\bundle\nsis\PlayerPass_0.1.0_x64-setup.exe"
+  "src-tauri\target\release\bundle\nsis\PlayerPass_0.1.2_x64-setup.exe"
 ```
 
 Common CI env vars: `WINDOWS_CERTIFICATE` (base64 of the `.pfx`), `WINDOWS_CERTIFICATE_PASSWORD`.

@@ -148,19 +148,19 @@
   margin-top: auto;
   padding-top: 20px;
   text-align: center;
-  color: var(--muted);
-  font-size: 0.78rem;
+  color: #aeb4c2;
+  font-size: 0.8rem;
   line-height: 1.45;
 }
 
 .app-footer-by {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text);
-  opacity: 0.88;
+  opacity: 0.92;
 }
 
 .app-footer-meta {
@@ -169,8 +169,14 @@
 
 .app-footer-note {
   margin: 6px auto 0;
-  max-width: 420px;
-  opacity: 1;
+  max-width: 460px;
+  opacity: 0.95;
+  color: #b8becb;
+}
+
+html.theme-light .app-footer,
+html.theme-light .app-footer-note {
+  color: #3a4558;
 }
 
 .boot {
@@ -184,6 +190,41 @@
   flex: 1;
   display: grid;
   place-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.auth-chrome {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-chrome-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 4px 2px;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.auth-chrome-link:hover {
+  color: var(--text);
+  opacity: 1;
+  box-shadow: none;
+  transform: none;
+  background: transparent;
+  border: 0;
 }
 
 .auth-card {
@@ -258,6 +299,23 @@
   color: var(--muted);
   line-height: 1.45;
   font-size: 0.95rem;
+}
+
+.auth-card .brand-sub {
+  color: #c5cad6;
+  font-size: 0.98rem;
+  font-weight: 450;
+}
+
+.auth-card .field > span {
+  color: #c8ceda;
+  font-size: 0.84rem;
+  font-weight: 550;
+}
+
+html.theme-light .auth-card .brand-sub,
+html.theme-light .auth-card .field > span {
+  color: #2f3a4d;
 }
 
 .auth-form,
@@ -812,6 +870,11 @@ html.theme-light .btn.copy:hover {
   font-size: 0.82rem;
 }
 
+.lang-switch.compact {
+  gap: 0;
+  font-size: 0.72rem;
+}
+
 .lang-switch select {
   border: 1px solid var(--stroke);
   background: var(--select-bg);
@@ -820,6 +883,39 @@ html.theme-light .btn.copy:hover {
   padding: 6px 8px;
   color-scheme: inherit;
   appearance: auto;
+}
+
+.lang-switch.compact select {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 2px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  min-height: 0;
+  cursor: pointer;
+}
+
+.lang-switch.compact select:hover,
+.lang-switch.compact select:focus {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+html.theme-light .lang-switch.compact select {
+  color: #4a5568;
+  background: transparent;
+}
+
+html.theme-light .lang-switch.compact select:hover,
+html.theme-light .lang-switch.compact select:focus {
+  color: #0e1016;
+  background: rgba(20, 28, 45, 0.06);
 }
 
 html.theme-light .lang-switch select {
