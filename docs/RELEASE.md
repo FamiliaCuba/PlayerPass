@@ -1,67 +1,62 @@
-# Publicar PlayerPass en GitHub (auto-update)
+# Publishing PlayerPass on GitHub (auto-update)
 
-Guía copy-pasteable. Versión actual alineada: **0.1.0** (`package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`).
+Copy-pasteable guide. Current aligned version: **0.1.0** (`package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`).
 
-No había `git remote` / `origin` al preparar esto → usa `OWNER/REPO` hasta que tengas el repo real.
+Remote: `https://github.com/FamiliaCuba/PlayerPass`.
 
 ---
 
-## 0. Checklist de secretos (antes del primer push)
+## 0. Secrets checklist (before the first push)
 
-**Nunca subas:**
+**Never commit:**
 
-| Qué | Dónde |
-|-----|--------|
-| `src-tauri/secrets/local.rs` | ya está en `.gitignore` |
-| Privkey del updater (`.key`) | fuera del repo + secreto GitHub |
-| `.pfx` / `.pem` Authenticode | fuera del repo |
+| What | Where |
+|------|--------|
+| `src-tauri/secrets/local.rs` | already in `.gitignore` |
+| Updater private key (`.key`) | outside the repo + GitHub Actions secret |
+| Authenticode `.pfx` / `.pem` | outside the repo |
 | `.env` | gitignored |
-| Webhook Discord / código admin | solo en `local.rs` o secretos CI |
+| Discord webhook / admin code | only in `local.rs` or CI secrets |
 
-Comprueba antes de `git add`:
+Check before `git add`:
 
 ```powershell
 git status
 git check-ignore -v src-tauri/secrets/local.rs
-# Debe decir que está ignorado.
+# Must report that the file is ignored.
 ```
 
 ---
 
-## 1. Crear repo en GitHub + primer push (sin secrets)
+## 1. Create the GitHub repo + first push (no secrets)
 
-En [github.com/new](https://github.com/new): nombre p. ej. `PlayerPass`, público o privado (el updater de GitHub Releases necesita que los assets del release sean descargables por la app; con repo privado hace falta token y configuración extra — **recomendado: repo público** para el updater simple).
-
-En PowerShell, desde la raíz del proyecto:
+Create a public repo (recommended for the simple GitHub Releases updater) named e.g. `PlayerPass`.
 
 ```powershell
 cd G:\GitHub\PlayerPass\PlayerPass
 
-# Sustituye OWNER y el nombre del repo
-git remote add origin https://github.com/OWNER/REPO.git
+git remote add origin https://github.com/FamiliaCuba/PlayerPass.git
 
 git add .
 git status
-# Revisa que NO aparezca secrets/local.rs ni *.key / *.pfx
+# Confirm secrets/local.rs and *.key / *.pfx are NOT staged
 
 git commit -m "chore: initial commit PlayerPass 0.1.0"
 git branch -M main
 git push -u origin main
 ```
 
-### Actualizar endpoints del updater
+### Updater endpoints
 
-En `src-tauri/tauri.conf.json` → `plugins.updater.endpoints`:
+In `src-tauri/tauri.conf.json` → `plugins.updater.endpoints`:
 
 ```text
-https://github.com/OWNER/REPO/releases/latest/download/latest.json
+https://github.com/FamiliaCuba/PlayerPass/releases/latest/download/latest.json
 ```
-
-Sustituye `OWNER/REPO` por tu remoto real (ej. `fmcuba/PlayerPass`) y haz commit de ese cambio.
 
 ---
 
-## 2. Generar claves del updater (Tauri signer)
+## 2. Generate updater keys (Tauri signer)
 
 ```powershell
 cd G:\GitHub\PlayerPass\PlayerPass
@@ -69,32 +64,40 @@ npm install
 npm run tauri signer generate -- -w "$env:USERPROFILE\.tauri\playerpass.key"
 ```
 
-- **Pública** (`playerpass.key.pub`): pega el **contenido** en `tauri.conf.json` → `plugins.updater.pubkey` (reemplaza `REPLACE_WITH_TAURI_SIGNER_PUBLIC_KEY`).
-- **Privada** (`playerpass.key`): **no** la subas. En GitHub → Settings → Secrets and variables → Actions:
-  - `TAURI_SIGNING_PRIVATE_KEY` = contenido completo del archivo privado
-  - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` = solo si la generaste con contraseña
+- **Public** (`playerpass.key.pub`): paste the **contents** into `tauri.conf.json` → `plugins.updater.pubkey`.
+- **Private** (`playerpass.key`): **do not commit**. In GitHub → Settings → Secrets and variables → Actions:
+  - `TAURI_SIGNING_PRIVATE_KEY` = full private key file contents
+  - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` = only if you generated the key with a password
 
-Commit de la pubkey en `tauri.conf.json` (es pública a propósito).
+Set the secret from a local key file (do not echo the contents):
+
+```powershell
+gh secret set TAURI_SIGNING_PRIVATE_KEY --repo FamiliaCuba/PlayerPass < "$env:USERPROFILE\.tauri\playerpass.key"
+# If the key has a password:
+# gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD --repo FamiliaCuba/PlayerPass --body "YOUR_PASSWORD"
+```
+
+Commit the pubkey in `tauri.conf.json` (it is meant to be public).
 
 ### `createUpdaterArtifacts`: local vs CI
 
-| Contexto | Valor | Motivo |
-|----------|--------|--------|
-| Local (`tauri.conf.json` en el repo) | `false` | `npm run tauri build` no exige privkey |
-| CI (`.github/workflows/release.yml`) | se pone a `true` en el job | genera `.sig` + permite `latest.json` |
+| Context | Value | Why |
+|---------|--------|-----|
+| Local (`tauri.conf.json` in the repo) | `false` | `npm run tauri build` does not require a private key |
+| CI (`.github/workflows/release.yml`) | flipped to `true` in the job | produces `.sig` + enables `latest.json` |
 
-No hace falta cambiar el JSON a mano para cada release si usas el workflow.
+You do not need to edit the JSON by hand for each release if you use the workflow.
 
 ---
 
-## 3. Secretos opcionales de la app en CI
+## 3. Optional app secrets in CI
 
-El workflow crea `local.rs` así:
+The workflow builds `local.rs` as follows:
 
-1. Si existe el secreto `DISCORD_WEBHOOK_URL` → escribe `local.rs` con los secretos CI.
-2. Si no → copia `local.example.rs` (placeholders; recovery/OAuth quedan desactivados o stub).
+1. If secret `DISCORD_WEBHOOK_URL` exists → write `local.rs` from CI secrets.
+2. Otherwise → copy `local.example.rs` (placeholders; recovery/OAuth stay stubbed).
 
-Secretos opcionales en GitHub Actions:
+Optional GitHub Actions secrets:
 
 - `DISCORD_WEBHOOK_URL`
 - `ADMIN_RECOVERY_CODE`
@@ -104,26 +107,31 @@ Secretos opcionales en GitHub Actions:
 
 ---
 
-## 4. Workflow CI
+## 4. CI workflow
 
-Archivo: `.github/workflows/release.yml`
+File: `.github/workflows/release.yml`
 
-- Trigger: push de tag `v*` (ej. `v0.1.0`) o `workflow_dispatch`
+- Trigger: push of tag `v*` (e.g. `v0.1.0`) or `workflow_dispatch`
 - Runner: `windows-latest`
 - Build: NSIS + updater (`updaterJsonPreferNsis: true`)
-- Crea GitHub Release con instalador, firmas y `latest.json`
+- Creates a GitHub Release with installer, signatures, and `latest.json`
+
+Required secrets for a successful updater release:
+
+- `TAURI_SIGNING_PRIVATE_KEY`
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (only if the key is password-protected)
 
 ---
 
-## 5. Cómo publicar un update (ej. v0.1.0)
+## 5. How to publish an update (e.g. v0.1.0)
 
-### 5.1 Alinear versión (semver) en **3 sitios**
+### 5.1 Align version (semver) in **3 places**
 
 1. `package.json` → `"version": "0.1.0"`
 2. `src-tauri/tauri.conf.json` → `"version": "0.1.0"`
 3. `src-tauri/Cargo.toml` → `version = "0.1.0"`
 
-El tag **debe** coincidir: `v0.1.0`.
+The tag **must** match: `v0.1.0`.
 
 ### 5.2 Commit + tag + push
 
@@ -136,71 +144,74 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-### 5.3 Esperar el release
+### 5.3 Wait for the release
 
-1. GitHub → Actions → workflow **Release** (debe ponerse verde).
-2. GitHub → Releases → aparece `PlayerPass v0.1.0` con:
+1. GitHub → Actions → **Release** workflow (must turn green).
+2. GitHub → Releases → `PlayerPass v0.1.0` with:
    - `PlayerPass_0.1.0_x64-setup.exe`
    - `latest.json`
-   - archivos `.sig` (opcionales para humanos; el updater usa la firma embebida en `latest.json`)
+   - `.sig` files (optional for humans; the updater uses the signature embedded in `latest.json`)
 
-### 5.4 Probar el updater
+### 5.4 Test the updater (end-to-end)
 
-1. Instala una build anterior (o la misma y luego publica `v0.1.1`).
-2. Abre la app → comprueba al arranque o **Ajustes → Comprobar actualizaciones**.
+Pipeline green + `latest.json` proves **publish/signing**. An installed build only detects an update when a **newer** version is published.
 
----
-
-## 6. SmartScreen / firma Authenticode (opcional)
-
-Sin certificado de código de confianza, Windows SmartScreen suele mostrar “Windows protegió tu PC”. Es esperado.
-
-Opciones:
-
-1. **Thumbprint en** `tauri.conf.json` → `bundle.windows.certificateThumbprint` (cert en el almacén de la máquina/CI).
-2. **`signtool`** con `.pfx` tras el build (ver README).
-3. En CI: secretos típicos `WINDOWS_CERTIFICATE` (base64 del `.pfx`) + `WINDOWS_CERTIFICATE_PASSWORD` y un paso `signtool` (no incluido por defecto en el workflow; añádelo cuando tengas el cert).
-
-Hasta entonces: documenta en la página de Releases “Más información → Ejecutar de todas formas”.
+1. Install `v0.1.0` from Releases.
+2. Bump to `0.1.1` in the three version files, tag `v0.1.1`, push.
+3. Open the installed app → startup check or **Settings → Check for updates**.
 
 ---
 
-## 7. Checklist final por release
+## 6. SmartScreen / Authenticode (optional)
 
-- [ ] Versión igual en los 3 archivos
-- [ ] Tag `vX.Y.Z` = esa versión
-- [ ] `pubkey` real en `tauri.conf.json` (no el placeholder)
-- [ ] Endpoint `OWNER/REPO` sustituido por el repo real
-- [ ] Secreto `TAURI_SIGNING_PRIVATE_KEY` en GitHub Actions
-- [ ] `local.rs` **no** está en el commit (`git status` limpio de secrets)
-- [ ] No hay `.key` / `.pfx` / `.env` en el árbol a subir
-- [ ] Actions verde + Release con `setup.exe` + `latest.json`
+Without a trusted code-signing certificate, Windows SmartScreen often shows “Windows protected your PC”. Expected.
+
+Options:
+
+1. **Thumbprint in** `tauri.conf.json` → `bundle.windows.certificateThumbprint` (cert in the machine/CI store).
+2. **`signtool`** with a `.pfx` after the build (see README).
+3. In CI: typical secrets `WINDOWS_CERTIFICATE` (base64 `.pfx`) + `WINDOWS_CERTIFICATE_PASSWORD` and a `signtool` step (not in the default workflow; add it when you have a cert).
+
+Until then: document on the Releases page “More info → Run anyway”.
 
 ---
 
-## Comandos rápidos — primera publicación v0.1.0
+## 7. Per-release checklist
+
+- [ ] Same version in all 3 files
+- [ ] Tag `vX.Y.Z` matches that version
+- [ ] Real `pubkey` in `tauri.conf.json` (not a placeholder)
+- [ ] Endpoint points at `FamiliaCuba/PlayerPass`
+- [ ] Secret `TAURI_SIGNING_PRIVATE_KEY` set in GitHub Actions
+- [ ] `local.rs` is **not** in the commit
+- [ ] No `.key` / `.pfx` / `.env` in the tree to push
+- [ ] Actions green + Release with `setup.exe` + `latest.json`
+
+---
+
+## Quick commands — first publish v0.1.0
 
 ```powershell
-# 1) Remote (una vez)
-git remote add origin https://github.com/OWNER/REPO.git
+# 1) Remote (once)
+git remote add origin https://github.com/FamiliaCuba/PlayerPass.git
 
-# 2) Claves updater (una vez)
+# 2) Updater keys (once)
 npm run tauri signer generate -- -w "$env:USERPROFILE\.tauri\playerpass.key"
-# → pega .pub en tauri.conf.json
-# → mete la privkey en secret TAURI_SIGNING_PRIVATE_KEY
+# → paste .pub into tauri.conf.json
+# → set private key as secret TAURI_SIGNING_PRIVATE_KEY
 
-# 3) Endpoint real en tauri.conf.json (una vez)
-# https://github.com/OWNER/REPO/releases/latest/download/latest.json
+# 3) Real endpoint in tauri.conf.json (once)
+# https://github.com/FamiliaCuba/PlayerPass/releases/latest/download/latest.json
 
-# 4) Primer commit + push (si aún no hay commits)
+# 4) First commit + push (if needed)
 git add .
-git status   # verificar: sin local.rs ni claves
+git status   # verify: no local.rs or keys
 git commit -m "chore: initial commit PlayerPass 0.1.0"
 git branch -M main
 git push -u origin main
 
-# 5) Tag de release
+# 5) Release tag
 git tag v0.1.0
 git push origin v0.1.0
-# → esperar Actions → Releases
+# → wait for Actions → Releases
 ```
