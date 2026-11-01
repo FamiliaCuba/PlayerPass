@@ -68,8 +68,13 @@ jobs:
             [System.IO.File]::WriteAllLines((Join-Path $pwd $dst), $lines)
             Write-Host "local.rs generated from GitHub secrets"
           } else {
+            # Tagged releases MUST embed recovery webhook via Actions secrets
+            # (never commit local.rs). Auto-update then ships binaries that can recover.
+            if ($env:GITHUB_REF -like 'refs/tags/v*') {
+              throw "Missing secret DISCORD_WEBHOOK_URL. Add it in repo Settings → Secrets (do not commit local.rs)."
+            }
             Copy-Item src-tauri/secrets/local.example.rs $dst
-            Write-Host "local.rs = local.example.rs (placeholders)"
+            Write-Host "local.rs = local.example.rs (placeholders; non-tag build)"
           }
 
       # Local: createUpdaterArtifacts=false (no private key required).

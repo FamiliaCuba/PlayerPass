@@ -20,6 +20,9 @@ pub struct Profile {
     /// Segundos hasta limpiar el portapapeles tras copiar (5–300). Default 25.
     #[serde(default = "default_clipboard_clear_seconds")]
     pub clipboard_clear_seconds: u32,
+    /// Al abrir la app, buscar e instalar updates automáticamente. Default true.
+    #[serde(default = "default_auto_check_updates")]
+    pub auto_check_updates: bool,
 }
 
 impl Default for Profile {
@@ -30,6 +33,7 @@ impl Default for Profile {
             theme: default_theme(),
             auto_lock_minutes: default_auto_lock_minutes(),
             clipboard_clear_seconds: default_clipboard_clear_seconds(),
+            auto_check_updates: default_auto_check_updates(),
         }
     }
 }
@@ -50,12 +54,17 @@ fn default_clipboard_clear_seconds() -> u32 {
     25
 }
 
+fn default_auto_check_updates() -> bool {
+    true
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsInput {
     pub theme: Option<String>,
     pub auto_lock_minutes: Option<u32>,
     pub clipboard_clear_seconds: Option<u32>,
+    pub auto_check_updates: Option<bool>,
 }
 
 fn profile_path(app_data_dir: &Path) -> PathBuf {
@@ -124,6 +133,9 @@ pub fn update_settings(app_data_dir: &Path, input: SettingsInput) -> Result<Prof
             return Err("clipboardClearSeconds debe estar entre 5 y 300".into());
         }
         profile.clipboard_clear_seconds = secs;
+    }
+    if let Some(auto) = input.auto_check_updates {
+        profile.auto_check_updates = auto;
     }
     if profile.locale.trim().is_empty() {
         profile.locale = default_locale();

@@ -29,6 +29,7 @@ export function SettingsModal({
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [autoLockMinutes, setAutoLockMinutes] = useState(10);
   const [clipboardClearSeconds, setClipboardClearSeconds] = useState(25);
+  const [autoCheckUpdates, setAutoCheckUpdates] = useState(true);
   const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export function SettingsModal({
     setTheme(profile.theme === "light" ? "light" : "dark");
     setAutoLockMinutes(profile.autoLockMinutes ?? 10);
     setClipboardClearSeconds(profile.clipboardClearSeconds ?? 25);
+    setAutoCheckUpdates(profile.autoCheckUpdates !== false);
     setError(null);
   }, [open, profile]);
 
@@ -50,6 +52,7 @@ export function SettingsModal({
         theme,
         autoLockMinutes,
         clipboardClearSeconds,
+        autoCheckUpdates,
       });
       applyTheme(next.theme);
       onProfileChange(next);
@@ -66,7 +69,9 @@ export function SettingsModal({
     setChecking(true);
     setError(null);
     onToast(t("checkingUpdates"));
-    const result = await checkAndInstallUpdate();
+    const result = await checkAndInstallUpdate({
+      onFound: (version) => onToast(t("updateFound", { version })),
+    });
     setChecking(false);
     if (result.status === "upToDate") {
       onToast(t("updateUpToDate"));
@@ -168,6 +173,15 @@ export function SettingsModal({
                     setClipboardClearSeconds(Number(e.target.value) || 5)
                   }
                 />
+              </label>
+
+              <label className="check-row check-row-compact">
+                <input
+                  type="checkbox"
+                  checked={autoCheckUpdates}
+                  onChange={(e) => setAutoCheckUpdates(e.target.checked)}
+                />
+                <span>{t("autoCheckUpdates")}</span>
               </label>
 
               {error ? <p className="form-error">{error}</p> : null}

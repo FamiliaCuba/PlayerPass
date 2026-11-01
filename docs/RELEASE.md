@@ -90,20 +90,43 @@ You do not need to edit the JSON by hand for each release if you use the workflo
 
 ---
 
-## 3. Optional app secrets in CI
+## 3. App secrets in CI (webhook stays private)
 
-The workflow builds `local.rs` as follows:
+**Do not commit `local.rs`.** Password recovery needs the Discord webhook **inside the compiled `.exe`**, but the URL must **not** be in the public git repo.
 
-1. If secret `DISCORD_WEBHOOK_URL` exists → write `local.rs` from CI secrets.
-2. Otherwise → copy `local.example.rs` (placeholders; recovery/OAuth stay stubbed).
+How it works:
 
-Optional GitHub Actions secrets:
+1. You store the webhook (and related values) as **GitHub Actions secrets**.
+2. On each Release build, CI writes a temporary `local.rs` from those secrets, compiles, then discards it.
+3. Auto-update downloads that signed binary — recovery works, webhook never appears on GitHub.
 
-- `DISCORD_WEBHOOK_URL`
-- `ADMIN_RECOVERY_CODE`
-- `DISCORD_INVITE_URL`
-- `GOOGLE_OAUTH_CLIENT_ID`
-- `MICROSOFT_OAUTH_CLIENT_ID`
+For **tagged** releases (`v*`), `DISCORD_WEBHOOK_URL` is **required** (the workflow fails without it).
+
+Set secrets (PowerShell, from your local `local.rs` — never paste into chat):
+
+```powershell
+# From repo root — uploads secrets without printing values
+$raw = Get-Content src-tauri/secrets/local.rs -Raw
+function Set-ConstSecret([string]$name) {
+  if ($raw -match ("pub const {0}: &str = `"([^`"]*)`"" -f $name)) {
+    $val = $Matches[1]
+    if ($val) { $val | gh secret set $name; Write-Host "OK $name" }
+  }
+}
+Set-ConstSecret DISCORD_WEBHOOK_URL
+Set-ConstSecret ADMIN_RECOVERY_CODE
+Set-ConstSecret DISCORD_INVITE_URL
+```
+
+Or in the web UI: **Settings → Secrets and variables → Actions**.
+
+| Secret | Required for tags |
+|--------|-------------------|
+| `DISCORD_WEBHOOK_URL` | **Yes** |
+| `ADMIN_RECOVERY_CODE` | Recommended |
+| `DISCORD_INVITE_URL` | Recommended |
+| `GOOGLE_OAUTH_CLIENT_ID` | No |
+| `MICROSOFT_OAUTH_CLIENT_ID` | No |
 
 ---
 

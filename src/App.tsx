@@ -29,6 +29,7 @@ const DEFAULT_PROFILE: Profile = {
   theme: "dark",
   autoLockMinutes: 10,
   clipboardClearSeconds: 25,
+  autoCheckUpdates: true,
 };
 
 function AppShell() {
@@ -49,6 +50,7 @@ function AppShell() {
   const lastActivity = useRef(Date.now());
   const phaseRef = useRef(phase);
   const lockMinutesRef = useRef(profile.autoLockMinutes ?? 10);
+  const didAutoUpdateCheck = useRef(false);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -81,14 +83,6 @@ function AppShell() {
     };
   }, []);
 
-  // Auto-update silencioso al arrancar (falla sin pubkey/repo real; se ignora).
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void checkAndInstallUpdate();
-    }, 4000);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   const showToast = useCallback((message: string, tone: ToastTone = "default") => {
     setToastTone(tone);
     setToast(message);
@@ -97,6 +91,33 @@ function AppShell() {
     toastTimer.current = window.setTimeout(() => setToast(null), ms);
   }, []);
 
+  // Al abrir: buscar update e instalar/relanzar si hay una nueva versión.
+  useEffect(() => {
+    if (phase === "loading" || didAutoUpdateCheck.current) return;
+    didAutoUpdateCheck.current = true;
+    if (profile.autoCheckUpdates === false) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const result = await checkAndInstallUpdate({
+          onFound: (version) => {
+            if (!cancelled) {
+              showToast(t("updateFound", { version }), "success");
+            }
+          },
+        });
+        if (cancelled) return;
+        if (result.status === "updated") {
+          showToast(t("updateInstalling"), "success");
+        }
+        // upToDate / unavailable: silencioso al arranque.
+      })();
+    }, 1500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [phase, profile.autoCheckUpdates, showToast, t]);
   const handleLock = useCallback(async () => {
     await api.lockVault();
     setAccounts([]);

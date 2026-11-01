@@ -51,12 +51,14 @@ export type Profile = {
   theme?: ThemeMode | string;
   autoLockMinutes?: number;
   clipboardClearSeconds?: number;
+  autoCheckUpdates?: boolean;
 };
 
 export type SettingsInput = {
   theme?: ThemeMode;
   autoLockMinutes?: number;
   clipboardClearSeconds?: number;
+  autoCheckUpdates?: boolean;
 };
 
 export const api = {
