@@ -101,5 +101,6 @@ jobs:
             See `docs/RELEASE.md`.
           releaseDraft: false
           prerelease: false
-          includeUpdaterJson: true
+          uploadUpdaterJson: true
           updaterJsonPreferNsis: true
+          uploadUpdaterSignatures: true

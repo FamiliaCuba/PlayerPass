@@ -61,7 +61,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY5MDZEMTMxQ0IzOEI0NkMKUldSc3REakxNZEVHK1hlN0tVYkl0a3VsVTRQNnM3R1p1VDJSVVdMbWdEdTNzOTdBVm9RWFZSUWEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMwRUM4RTQ1NjlGNEYxMTEKUldRUjhmUnBSWTdzTUMzVXZBaEVWUXE3Q0JEc3VldEMzZ3l4WmxhSTZMam1vV0UzNHdoa2dWYWIK",
       "endpoints": [
         "https://github.com/FamiliaCuba/PlayerPass/releases/latest/download/latest.json"
       ],
